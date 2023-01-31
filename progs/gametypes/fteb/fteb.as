@@ -442,7 +442,7 @@ void GT_ThinkRules() {
             return;
         }
 		if ( ftaga_countDown > 0 ) {
-			// we can't use the automatic countdown announces because their are based on the
+			// we can't use the automatic countdown announces because they are based on the
 			// matchstate timelimit, and prerounds don't use it. So, fire the announces "by hand".
 			int remainingSeconds = int( ( ftaga_roundStateEndTime - levelTime ) * 0.001f );
 			//G_PrintMsg(null, String ( ftaga_countDown ) );
@@ -485,7 +485,10 @@ void GT_ThinkRules() {
 			continue;
 		}
 
-		// Detect ammo changes to detect when player shoots to do some knockback and stats stuff to enjoy the game better
+		Entity @ent = client.getEnt();
+
+		// Detect ammo changes to detect when player shoots to do some knockback and stats stuff to enjoy the game better.
+		// Checking teams to prevent procs on spectators. Checking asd to prevent proc when joining mid-match.
 		if ( client.inventoryCount(AMMO_BOLTS) < 99 && ( client.team == 2 || client.team == 3 )) {
 			if ( gametype.isInstagib == false ) {
 				Vec3 eye = client.getEnt().origin + Vec3(0, 0, client.getEnt().viewHeight);
@@ -500,14 +503,14 @@ void GT_ThinkRules() {
 				Trace tr; // tr.ent: -1 = nothing; 0 = wall; 1 = player
 				tr.doTrace(eye, Vec3(), Vec3(), player_look, 1, MASK_SOLID); //MASK_SHOT MASK_SOLID
 
-				Entity @ent = @G_SpawnEntity("boom");
-				ent.origin = tr.get_endPos();
-				ent.splashDamage(@ent, 72, 0, 67 * g_knockback_scale.value, 0, MOD_EXPLOSIVE);
+				Entity @boom = @G_SpawnEntity("boom");
+				boom.origin = tr.get_endPos();
+				boom.splashDamage(@ent, 72, 0, 67 * g_knockback_scale.value, 0, MOD_EXPLOSIVE);
 				
 				// destroy splash entity
-				ent.freeEntity();
+				boom.freeEntity();
 
-				if ( match.getState() == MATCH_STATE_PLAYTIME ) {
+				if ( match.getState() == MATCH_STATE_PLAYTIME && !ent.isGhosting()) {
 					GT_Stats_GetPlayer( client ).stats.add("eb_shots", 1);
 				}
 				
@@ -516,8 +519,7 @@ void GT_ThinkRules() {
 		}
 
 		client.inventorySetCount(AMMO_GUNBLADE, 1);
-
-		Entity @ent = client.getEnt();
+		
 		if(ent.health > ent.maxHealth) {
 			ent.health -= (frameTime * 0.001f);
 		}
@@ -603,17 +605,21 @@ void GT_ThinkRules() {
 	// if everyone on a team is frozen then start a new round
 	if(match.getState() == MATCH_STATE_PLAYTIME) {
 		int count;
+		int size;
 		for(int i = TEAM_ALPHA; i < GS_MAX_TEAMS; i++) {
 			@team = @G_GetTeam(i);
 			count = 0;
+			size = 0;
 
 			for(int j = 0; @team.ent(j) != null; j++) {
+				size++;
+
 				if(!team.ent(j).isGhosting()) {
 					count++;
 				}
 			}
 
-			if(count == 1) {
+			if(count == 1 && size > 1) { // Only show the message when team size > 1
 				for(int h = 0; @team.ent(h) != null; h++) {
 					G_CenterPrintMsg( @team.ent(h), "Last unfrozen teammate!\n" );
 				}
