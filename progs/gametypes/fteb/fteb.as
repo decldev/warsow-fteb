@@ -22,11 +22,33 @@ bool[] spawnNextRound(maxClients);
 //String[] defrostMessage(maxClients);
 bool doRemoveRagdolls = false;
 
+Cvar reverseHandicap( "fteb_reversehandicap", "1", CVAR_ARCHIVE );
 Cvar g_knockback_scale("g_knockback_scale", "", 0);
 
 // Vec3 doesn't have dot product ffs
 float dot(const Vec3 v1, const Vec3 v2) {
 	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+// Check if player is alone versus a bigger team
+bool playerIsAlone(Client @client) {
+	Team @team;
+	array<int> teamSize(2);
+	int soloCount = 0;
+
+	for (int i = 0; i < 2; i++) {
+		@team = @G_GetTeam(i + TEAM_ALPHA);
+		teamSize[i] = 0;
+
+		for(int j = 0; @team.ent(j) != null; j++) {
+			teamSize[i]++;
+		}
+
+		if (teamSize[i] == 1) soloCount++; 
+	}
+
+	if ((soloCount == 1) && (teamSize[client.team - TEAM_ALPHA] == 1)) return true;
+	return false;
 }
 
 void FTAG_giveInventory(Client @client) {
@@ -37,7 +59,9 @@ void FTAG_giveInventory(Client @client) {
 	client.inventorySetCount(AMMO_WEAK_BOLTS, 99);
 
     // give armor
-    client.armor = 50;
+    if (reverseHandicap.boolean && playerIsAlone(client)) {
+		client.armor = 125;
+	} else client.armor = 50;
 
     // select electrobolt
     client.selectWeapon( WEAP_ELECTROBOLT );
@@ -587,9 +611,11 @@ void GT_ThinkRules() {
 			client.setHUDStat(STAT_MESSAGE_SELF, 0);
 		}
 		
-		// Draw hurt players with red Regeneration frame
-		if ( (ent.health < 76) && ent.team != TEAM_SPECTATOR ) {
+		// Draw hurt players with blue red Regeneration frame
+		if ( (ent.health + client.armor) < 76 && ent.team != TEAM_SPECTATOR ) {
             ent.effects |= EF_REGEN;
+		} else if ( (ent.health + client.armor) > 150 && ent.team != TEAM_SPECTATOR ) {
+			ent.effects |= EF_SHELL;
 		}
 	}
 
@@ -799,6 +825,7 @@ void GT_InitGametype() {
 			+ "set g_maplist \"wca1 wca2\" // list of maps in automatic rotation\n"
 			+ "set g_maprotation \"1\"   // 0 = same map, 1 = in order, 2 = random\n"
 			+ "\n// game settings\n"
+			+ "set fteb_reversehandicap \"1\" // give more armor as solo in 1v2+\n"
 			+ "set dm_powerupDrop \"0\"\n"
 			+ "set g_scorelimit \"11\"\n"
 			+ "set g_timelimit \"0\"\n"
