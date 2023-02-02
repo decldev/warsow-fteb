@@ -32,22 +32,25 @@ float dot(const Vec3 v1, const Vec3 v2) {
 
 // Check if player is alone versus a bigger team
 bool playerIsAlone(Client @client) {
-	Team @team;
-	array<int> teamSize(2);
-	int soloCount = 0;
+	if(match.getState() == MATCH_STATE_PLAYTIME) {
+		Team @team;
+		array<int> teamSize(2);
+		int soloCount = 0;
 
-	for (int i = 0; i < 2; i++) {
-		@team = @G_GetTeam(i + TEAM_ALPHA);
-		teamSize[i] = 0;
+		for (int i = 0; i < 2; i++) {
+			@team = @G_GetTeam(i + TEAM_ALPHA);
+			teamSize[i] = 0;
 
-		for(int j = 0; @team.ent(j) != null; j++) {
-			teamSize[i]++;
+			for(int j = 0; @team.ent(j) != null; j++) {
+				teamSize[i]++;
+			}
+
+			if (teamSize[i] == 1) soloCount++; 
 		}
 
-		if (teamSize[i] == 1) soloCount++; 
+		if ((soloCount == 1) && (teamSize[client.team - TEAM_ALPHA] == 1)) return true;
 	}
 
-	if ((soloCount == 1) && (teamSize[client.team - TEAM_ALPHA] == 1)) return true;
 	return false;
 }
 
