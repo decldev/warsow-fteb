@@ -532,7 +532,7 @@ void GT_ThinkRules() {
 
 				Entity @boom = @G_SpawnEntity("boom");
 				boom.origin = tr.get_endPos();
-				boom.splashDamage(@ent, 72, 0, 67 * g_knockback_scale.value, 0, MOD_EXPLOSIVE);
+				boom.splashDamage(@boom, 72, 0, 67 * g_knockback_scale.value, 0, MOD_EXPLOSIVE);
 				
 				// destroy splash entity
 				boom.freeEntity();

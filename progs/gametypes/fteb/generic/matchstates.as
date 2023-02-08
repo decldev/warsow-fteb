@@ -158,11 +158,11 @@ void GENERIC_SetUpEndMatch()
 
         if ( client.state() >= CS_SPAWNED ) {
             client.respawn( true ); // ghost them all
-			GENERIC_SetPostmatchQuickMenu( @client );
-		}
+            GENERIC_SetPostmatchQuickMenu( @client );
+        }
     }
 
-	GENERIC_UpdateMatchScore();
+    GENERIC_UpdateMatchScore();
 
     // print scores to console
     if ( gametype.isTeamBased )

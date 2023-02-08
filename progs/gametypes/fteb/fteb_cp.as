@@ -16,6 +16,9 @@ class cFrozenPlayer {
 	cFrozenPlayer @next;
 	cFrozenPlayer @prev; // for faster removal
 
+	Vec3 vel;
+	float dt, drag = 0.99;
+
 	cFrozenPlayer(Client @player) {
 		if(@player == null) {
 			return;
@@ -201,6 +204,21 @@ class cFrozenPlayer {
 		Vec3 center, mins, maxs, origin;
 		//bool decay = true;
 		origin = this.sprite.origin;
+
+		// Friction to prevent frozen players sliding forever
+		Trace touch;
+		Vec3 touchStart, touchEnd;
+		touchStart = touchEnd = this.model.origin;
+		touchEnd.z -= 27; // ~from origin to ground
+
+		if (touch.doTrace(touchStart, Vec3(), Vec3(), touchEnd, 1, MASK_SOLID)) {
+			dt = 1 - (frameTime * 0.001);
+			vel = this.model.velocity;
+			vel.x = abs(vel.x) < 5 ? 0 : vel.x * pow(drag, dt);
+			vel.y = abs(vel.y) < 5 ? 0 : vel.y * pow(drag, dt);
+			this.model.velocity = vel;
+		}
+		//
 
 		array< Entity @ > @nearby = G_FindInRadius( origin, FTAG_DEFROST_RADIUS );
 
