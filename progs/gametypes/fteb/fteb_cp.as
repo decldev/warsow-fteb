@@ -95,7 +95,6 @@ class cFrozenPlayer {
 
 		// Play shattering sound if player defrosts itself in lava, pit, telefrag, etc.
 		if ( sound ) {
-			G_PrintMsg
 			playShatterSound(this.model.origin);
 		}
 
