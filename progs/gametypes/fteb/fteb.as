@@ -66,11 +66,16 @@ void FTAG_giveInventory(Client @client) {
 		client.armor = 125;
 	} else client.armor = 50;
 
+	// Spawn with less health if round ongoing
+	if ((match.getState() == MATCH_STATE_PLAYTIME) && (gametype.shootingDisabled == false)) {
+		client.getEnt().health = 25;
+	}
+
     // select electrobolt
     client.selectWeapon( WEAP_ELECTROBOLT );
 }
 
-void FTAG_playerKilled(Entity @target, Entity @attacker, Entity @inflictor) {
+void FTAG_playerKilled(Entity @target, Entity @attacker, Entity @inflictor, String &mod) {
 	if(@target.client == null) {
 		return;
 	}
@@ -89,14 +94,21 @@ void FTAG_playerKilled(Entity @target, Entity @attacker, Entity @inflictor) {
 		target.dropItem(AMMO_PACK);
 	}
 
+	// Skip kills not made during match
 	if(match.getState() != MATCH_STATE_PLAYTIME) {
 		return;
 	}
 
-	cFrozenPlayer(target.client);
-
 	GT_Stats_GetPlayer( target.client ).stats.add("deaths", 1);
 	GT_updateScore(target.client);
+
+	// Forward telefrags to respawn instead
+	if (mod == 64) {
+		cFrozenPlayer(target.client, levelTime);
+		return;
+	}
+
+	cFrozenPlayer(target.client, 0);
 }
 
 void FTAG_NewRound(Team @loser, int newState) {
@@ -322,6 +334,8 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
     } else if(score_event == "dmg") {
 		if(match.getState() == MATCH_STATE_PLAYTIME) {
 			Entity @attacker = null;
+			Entity @ent = G_GetEntity(args.getToken(0).toInt());
+
     		if ( @client != null )
        			@attacker = @client.getEnt();
 
@@ -329,7 +343,14 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
 				return; // ignore falldamage
 			}
 
-			Entity @ent = G_GetEntity(args.getToken(0).toInt());
+			// defrost telefragged frozen players
+			if (args.getToken(1).toInt() == 100000) {
+				cFrozenPlayer @frozen = @FTAG_GetFrozenForEnt(ent);
+				if(@frozen != null) {
+					frozen.defrost(true);
+				}
+			}
+			
 			if(@ent != null && @ent.client != null) {
 				lastShotTime[ent.client.playerNum] = levelTime;
 			} else {
@@ -350,11 +371,11 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
 			@attacker = @client.getEnt();
 		}
 
-		FTAG_playerKilled(G_GetEntity(args.getToken(0).toInt()), attacker, G_GetEntity(args.getToken(1).toInt()));
+		FTAG_playerKilled(G_GetEntity(args.getToken(0).toInt()), attacker, G_GetEntity(args.getToken(1).toInt()), args.getToken(3));
 	} else if(score_event == "disconnect") {
 		cFrozenPlayer @frozen = @FTAG_GetFrozenForPlayer(client);
 		if(@frozen != null) {
-			frozen.defrost();
+			frozen.defrost(false);
 		}
 
 		/*if(playerIsFrozen[client.playerNum()]) {
@@ -387,11 +408,7 @@ void GT_PlayerRespawn(Entity @ent, int old_team, int new_team) {
 		cFrozenPlayer @frozen = @FTAG_GetFrozenForPlayer(ent.client);
 
 		if(@frozen != null) {
-			frozen.defrost();
-			
-			if (gametype.shootingDisabled == false) {
-				ent.health = 25;
-			}
+			frozen.defrost(false);
 		}
 	}
 
@@ -614,10 +631,10 @@ void GT_ThinkRules() {
 			client.setHUDStat(STAT_MESSAGE_SELF, 0);
 		}
 		
-		// Draw hurt players with blue red Regeneration frame
+		// Draw hurt players with red Regeneration frame
 		if ( (ent.health + client.armor) < 76 && ent.team != TEAM_SPECTATOR ) {
             ent.effects |= EF_REGEN;
-		} else if ( (ent.health + client.armor) > 150 && ent.team != TEAM_SPECTATOR ) {
+		} else if ( (ent.health + client.armor) > 150 && ent.team != TEAM_SPECTATOR ) { // And boosted solo player with blue Shell frame
 			ent.effects |= EF_SHELL;
 		}
 	}

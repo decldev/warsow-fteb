@@ -12,6 +12,7 @@ class cFrozenPlayer {
 
 	bool frozen;
 	bool mateDefrosting;
+	int shatterTime;
 
 	cFrozenPlayer @next;
 	cFrozenPlayer @prev; // for faster removal
@@ -19,7 +20,7 @@ class cFrozenPlayer {
 	Vec3 vel;
 	float dt, drag = 0.99;
 
-	cFrozenPlayer(Client @player) {
+	cFrozenPlayer(Client @player, int telefragTime) {
 		if(@player == null) {
 			return;
 		}
@@ -34,6 +35,7 @@ class cFrozenPlayer {
 		this.defrostTime = 0;
 		//this.lastTouch = 0;
 		this.mateDefrosting = false;
+		this.shatterTime = telefragTime;
 
 		@this.client = player;
 		Vec3 vec = this.client.getEnt().origin;
@@ -45,7 +47,7 @@ class cFrozenPlayer {
 		this.model.type = ET_PLAYER;
 		this.model.moveType = MOVETYPE_TOSSSLIDE;
 		this.model.mass = 250; // no longer arbritary
-		this.model.takeDamage = 1;
+		this.model.takeDamage = DAMAGE_YES;
 		this.model.origin = vec;
 		this.model.velocity = 0;
 		this.model.setSize(mins, maxs);
@@ -87,9 +89,15 @@ class cFrozenPlayer {
 		}
 	}
 
-	void defrost() {
+	void defrost(bool sound) {
 		// maybe it will fix bumping into invisible players
 		//this.model.solid = SOLID_NOT;
+
+		// Play shattering sound if player defrosts itself in lava, pit, telefrag, etc.
+		if ( sound ) {
+			G_PrintMsg
+			playShatterSound(this.model.origin);
+		}
 
 		this.model.freeEntity();
 		this.sprite.freeEntity();
@@ -107,6 +115,7 @@ class cFrozenPlayer {
 
 		this.frozen = false;
 		this.mateDefrosting = false;
+		this.client.respawn(false);
 	}
 
 	void use(Entity @activator) {
@@ -138,8 +147,7 @@ class cFrozenPlayer {
 
 				G_PrintMsg(null, this.client.name + " was defrosted\n");
 
-				this.client.respawn(false);
-				this.defrost();
+				this.defrost(true);
 			}
 
 			return;
@@ -174,8 +182,7 @@ class cFrozenPlayer {
 
 			defrosts[activator.client.playerNum]++;
 
-			this.client.respawn(false);
-			this.defrost();
+			this.defrost(false);
 		}
 
 		// defrost pie
@@ -196,6 +203,11 @@ class cFrozenPlayer {
 	}
 
 	void think() {
+		// Telefragged players are instantly defrosted and respawn
+		if (this.shatterTime != 0) {
+			this.defrost(true);
+		}
+
 		this.model.effects |= EF_GODMODE; // doesn't work without this
 		this.sprite.origin = this.model.origin;
 		this.minimap.origin = this.model.origin;
@@ -269,6 +281,10 @@ class cFrozenPlayer {
 	}
 }
 
+void playShatterSound(Vec3 origin) {
+	G_PositionedSound( origin, CHAN_AUTO, G_SoundIndex("sounds/misc/gibs_explosion"), ATTN_NORM );
+}
+
 bool FTAG_LastAlive(Client @client) {
 	Team @team = @G_GetTeam(client.team);
 	for(int i = 0; @team.ent(i) != null; i++) {
@@ -282,14 +298,14 @@ bool FTAG_LastAlive(Client @client) {
 
 void FTAG_DefrostAllPlayers() {
 	for(cFrozenPlayer @frozen = @frozenHead; @frozen != null; @frozen = @frozen.next) {
-		frozen.defrost();
+		frozen.defrost(false);
 	}
 }
 
 void FTAG_DefrostTeam(int team) {
 	for(cFrozenPlayer @frozen = @frozenHead; @frozen != null; @frozen = @frozen.next) {
 		if(frozen.client.team == team) {
-			frozen.defrost();
+			frozen.defrost(false);
 		}
 	}
 }
@@ -301,6 +317,16 @@ bool FTAG_PlayerFrozen(Client @client) {
 cFrozenPlayer @FTAG_GetFrozenForPlayer(Client @client) {
 	for(cFrozenPlayer @frozen = @frozenHead; @frozen != null; @frozen = @frozen.next) {
 		if(@frozen.client == @client) {
+			return frozen;
+		}
+	}
+
+	return null;
+}
+
+cFrozenPlayer @FTAG_GetFrozenForEnt(Entity @ent) {
+	for(cFrozenPlayer @frozen = @frozenHead; @frozen != null; @frozen = @frozen.next) {
+		if(@frozen.model == @ent) {
 			return frozen;
 		}
 	}
