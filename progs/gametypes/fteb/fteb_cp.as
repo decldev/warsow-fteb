@@ -123,6 +123,8 @@ class cFrozenPlayer {
 			@frozenHead = @this.next;
 		}
 
+		G_CenterPrintMsg(this.client.getEnt(), ""); // To remove the text earlier
+		if (match.getState() == MATCH_STATE_POSTMATCH) return; // Prevent players mass respawning in POSTMATCH
 		this.model.freeEntity();
 		this.respawnQueue = false;
 		this.frozen = false;
@@ -222,7 +224,7 @@ class cFrozenPlayer {
 
 		// And respawn with a delay
 		if (this.respawnQueue && match.getState() == MATCH_STATE_PLAYTIME) {
-			if (levelTime > this.shatterTime + float(FTAG_DEFROST_TIME)) {
+			if (int(levelTime) > int(this.shatterTime) + int(FTAG_SHATTER_DELAY)) {
 				this.defrostSpawn();
 			}
 		}

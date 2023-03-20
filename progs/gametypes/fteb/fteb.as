@@ -1,6 +1,7 @@
 // TODO: make people spec whoever is defrosting them
 
 const uint FTAG_DEFROST_TIME = 3000;
+const uint FTAG_SHATTER_DELAY = 6000;
 const uint FTAG_INVERSE_HAZARD_DEFROST_SCALE = 2;
 const uint FTAG_INVERSE_ATTACK_DEFROST_SCALE = 5;
 const uint FTAG_DEFROST_ATTACK_DELAY = 2000;
