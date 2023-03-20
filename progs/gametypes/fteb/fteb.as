@@ -442,7 +442,7 @@ void GT_ThinkRules() {
 			matchEndTime = levelTime;
 		}
 
-		if (levelTime > matchEndTime + 1000) match.launchState(match.getState() + 1);
+		if (int(levelTime) > int(matchEndTime) + 1000) match.launchState(match.getState() + 1);
 	}
 
 	if (match.timeLimitHit() || match.suddenDeathFinished()) {
