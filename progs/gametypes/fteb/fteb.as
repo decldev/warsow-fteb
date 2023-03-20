@@ -332,7 +332,7 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
             player.stats.add(cleanAward, 1);
         }
     } else if(score_event == "dmg") {
-		if(match.getState() == MATCH_STATE_PLAYTIME) {
+		if(match.getState() == MATCH_STATE_PLAYTIME && !match.scoreLimitHit()) {
 			Entity @attacker = null;
 			Entity @ent = G_GetEntity(args.getToken(0).toInt());
 
@@ -532,20 +532,21 @@ void GT_ThinkRules() {
 		Entity @ent = client.getEnt();
 
 		// Detect ammo changes to detect when player shoots to do some knockback and stats stuff to enjoy the game better.
-		// Checking teams to prevent procs on spectators. Checking asd to prevent proc when joining mid-match.
+		// Checking teams to prevent procs on spectators. Checking ghosting to prevent proc when joining mid-match.
+		// Should shooting be done by detecting ET_EVENT instead?
 		if ( client.inventoryCount(AMMO_BOLTS) < 99 && ( client.team == 2 || client.team == 3 )) {
 			if ( gametype.isInstagib == false ) {
-				Vec3 eye = client.getEnt().origin + Vec3(0, 0, client.getEnt().viewHeight);
+				Vec3 eye = ent.origin + Vec3(0, 0, ent.viewHeight);
 
 				Vec3 dir, right, up;
 				// unit vector
-				client.getEnt().angles.angleVectors(dir, right, up);
+				ent.angles.angleVectors(dir, right, up);
 
 				Vec3 player_look;
 				player_look = eye + dir * 9001; // Max distance to apply the explosion
 
 				Trace tr; // tr.ent: -1 = nothing; 0 = wall; 1 = player
-				tr.doTrace(eye, Vec3(), Vec3(), player_look, 1, MASK_SOLID); //MASK_SHOT MASK_SOLID
+				tr.doTrace(eye, Vec3(), Vec3(), player_look, 1, MASK_SOLID);
 
 				Entity @boom = @G_SpawnEntity("boom");
 				boom.origin = tr.get_endPos();
@@ -561,8 +562,6 @@ void GT_ThinkRules() {
 				client.inventorySetCount(AMMO_BOLTS, 99);
 			}
 		}
-
-		client.inventorySetCount(AMMO_GUNBLADE, 1);
 		
 		if(ent.health > ent.maxHealth) {
 			ent.health -= (frameTime * 0.001f);
@@ -695,6 +694,10 @@ bool GT_MatchStateFinished(int incomingMatchState) {
 	// state by returning true.
 	if(match.getState() <= MATCH_STATE_WARMUP && incomingMatchState > MATCH_STATE_WARMUP && incomingMatchState < MATCH_STATE_POSTMATCH) {
 		match.startAutorecord();
+	}
+
+	if(incomingMatchState == MATCH_STATE_POSTMATCH) {
+		// some delay
 	}
 
 	if(match.getState() == MATCH_STATE_POSTMATCH) {

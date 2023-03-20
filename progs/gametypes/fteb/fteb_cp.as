@@ -13,6 +13,7 @@ class cFrozenPlayer {
 	bool frozen;
 	bool mateDefrosting;
 	int shatterTime;
+	bool respawnQueue;
 
 	cFrozenPlayer @next;
 	cFrozenPlayer @prev; // for faster removal
@@ -36,6 +37,7 @@ class cFrozenPlayer {
 		//this.lastTouch = 0;
 		this.mateDefrosting = false;
 		this.shatterTime = telefragTime;
+		this.respawnQueue = false;
 
 		@this.client = player;
 		Vec3 vec = this.client.getEnt().origin;
@@ -89,19 +91,28 @@ class cFrozenPlayer {
 		}
 	}
 
-	void defrost(bool sound) {
+	void defrost(bool shatter) {
 		// maybe it will fix bumping into invisible players
 		//this.model.solid = SOLID_NOT;
 
-		// Play shattering sound if player defrosts itself in lava, pit, telefrag, etc.
-		if ( sound ) {
-			playShatterSound(this.model.origin);
-		}
-
-		this.model.freeEntity();
 		this.sprite.freeEntity();
 		this.minimap.freeEntity();
 
+		// Player defrosts itself in lava, pit, telefrag, etc.
+		if ( shatter ) {
+			playShatterSound(this.model.origin);
+			G_CenterPrintMsg(this.client.getEnt(), "Respawning!");
+
+			this.model.origin = Vec3(9000, 9000, 9000);
+			this.respawnQueue = true;
+
+			return;
+		}
+
+		this.defrostSpawn();
+	}
+
+	void defrostSpawn() {
 		if(@this.prev != null) {
 			@this.prev.next = @this.next;
 		}
@@ -112,6 +123,8 @@ class cFrozenPlayer {
 			@frozenHead = @this.next;
 		}
 
+		this.model.freeEntity();
+		this.respawnQueue = false;
 		this.frozen = false;
 		this.mateDefrosting = false;
 		this.client.respawn(false);
@@ -202,9 +215,16 @@ class cFrozenPlayer {
 	}
 
 	void think() {
-		// Telefragged players are instantly defrosted and respawn
-		if (this.shatterTime != 0) {
+		// Telefragged players are instantly defrosted
+		if (this.shatterTime != 0 && match.getState() == MATCH_STATE_PLAYTIME) {
 			this.defrost(true);
+		}
+
+		// And respawn with a delay
+		if (this.respawnQueue && match.getState() == MATCH_STATE_PLAYTIME) {
+			if (levelTime > this.shatterTime + float(FTAG_DEFROST_TIME)) {
+				this.defrostSpawn();
+			}
 		}
 
 		this.model.effects |= EF_GODMODE; // doesn't work without this
@@ -281,6 +301,7 @@ class cFrozenPlayer {
 }
 
 void playShatterSound(Vec3 origin) {
+	// No such sound file in Warfork. Let's not care about that.
 	G_PositionedSound( origin, CHAN_AUTO, G_SoundIndex("sounds/misc/gibs_explosion"), ATTN_NORM );
 }
 

@@ -108,7 +108,7 @@ void GENERIC_SetUpMatch()
     G_RemoveAllProjectiles();
     gametype.shootingDisabled = true;  // avoid shooting before "FIGHT!"
     gametype.readyAnnouncementEnabled = false;
-    gametype.scoreAnnouncementEnabled = true;
+    gametype.scoreAnnouncementEnabled = false; // Prevent "TEAMS ARE TIED!" in match start. Set as true later.
     gametype.countdownEnabled = true;
 
     // clear player stats and scores, team scores and respawn clients in team lists
@@ -139,8 +139,9 @@ void GENERIC_SetUpMatch()
     G_AnnouncerSound( null, soundindex, GS_MAX_TEAMS, false, null );
     G_CenterPrintMsg( null, "FIGHT!" );
 	
-	// now we can enable shooting
+	// now we can enable shooting and announcements
     gametype.shootingDisabled = false;
+    gametype.scoreAnnouncementEnabled = true;
 }
 
 void GENERIC_SetUpEndMatch()
