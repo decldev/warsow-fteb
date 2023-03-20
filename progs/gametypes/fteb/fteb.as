@@ -13,6 +13,7 @@ uint ftaga_roundStateStartTime;
 uint ftaga_roundStateEndTime;
 int ftaga_countDown;
 int ftaga_state;
+int matchEndTime;
 
 int prcYesIcon;
 int[] defrosts(maxClients);
@@ -333,7 +334,7 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
             player.stats.add(cleanAward, 1);
         }
     } else if(score_event == "dmg") {
-		if(match.getState() == MATCH_STATE_PLAYTIME && !match.scoreLimitHit()) {
+		if(match.getState() == MATCH_STATE_PLAYTIME) {
 			Entity @attacker = null;
 			Entity @ent = G_GetEntity(args.getToken(0).toInt());
 
@@ -436,7 +437,15 @@ void GT_PlayerRespawn(Entity @ent, int old_team, int new_team) {
 
 // Thinking function. Called each frame
 void GT_ThinkRules() {
-	if(match.scoreLimitHit() || match.timeLimitHit() || match.suddenDeathFinished()) {
+	if(match.scoreLimitHit()) {
+		if (matchEndTime == 0) {
+			matchEndTime = levelTime;
+		}
+
+		if (levelTime > matchEndTime + 1000) match.launchState(match.getState() + 1);
+	}
+
+	if (match.timeLimitHit() || match.suddenDeathFinished()) {
 		match.launchState(match.getState() + 1);
 	}
 
@@ -695,10 +704,6 @@ bool GT_MatchStateFinished(int incomingMatchState) {
 	// state by returning true.
 	if(match.getState() <= MATCH_STATE_WARMUP && incomingMatchState > MATCH_STATE_WARMUP && incomingMatchState < MATCH_STATE_POSTMATCH) {
 		match.startAutorecord();
-	}
-
-	if(incomingMatchState == MATCH_STATE_POSTMATCH) {
-		// some delay
 	}
 
 	if(match.getState() == MATCH_STATE_POSTMATCH) {
