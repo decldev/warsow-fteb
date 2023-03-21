@@ -741,7 +741,6 @@ bool GT_MatchStateFinished(int incomingMatchState) {
 					break;
 			}
 
-			G_PrintMsg(null, "asdasd\n");
 			G_CmdExecute("exec configs/server/gametypes/" + gametype.name + "_maps_" + mapPool + ".cfg silent");
 		}
 	}
@@ -887,10 +886,10 @@ void GT_InitGametype() {
 			//+ "set g_noclass_inventory \"eb bolts\"\n"
             //+ "set g_class_strong_ammo \"1\" // EB\n"
 			+ "\n// map rotation\n"
-			+ "set g_maplist \"wca1 wca2\" // list of maps in automatic rotation\n"
+			+ "set g_maplist \"wca1\" // List of maps in automatic rotation. This is overwritten in " + gametype.name + "_maps_xx.cfg.\n"
 			+ "set g_maprotation \"1\"   // 0 = same map, 1 = in order, 2 = random\n"
 			+ "\n// game settings\n"
-			+ "set fteb_reversehandicap \"1\" // give more armor as solo in 1v2+\n"
+			+ "set fteb_reversehandicap \"1\" // Give more armor as solo in 1v2+\n"
 			+ "set dm_powerupDrop \"0\"\n"
 			+ "set g_scorelimit \"11\"\n"
 			+ "set g_timelimit \"0\"\n"
