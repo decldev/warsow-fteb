@@ -442,37 +442,6 @@ void GT_ThinkRules() {
 	if(match.scoreLimitHit()) {
 		if (matchEndTime == 0) {
 			matchEndTime = levelTime;
-		
-			// Execute proper map pool according to the amount of players
-			Team @team;
-
-			for (int i = 0; i < 2; i++) {
-				@team = @G_GetTeam(i + TEAM_ALPHA);
-				for(int j = 0; @team.ent(j) != null; j++) {
-					playerAmount++;
-				}
-			}
-
-			switch (playerAmount) {
-				case 0:
-				case 1:
-				case 2:
-				case 3:
-					mapPool = "0-3";
-					break;
-				case 4:
-					mapPool = "4";
-					break;
-				case 5:
-				case 6:
-					mapPool = "5-6";
-					break;
-				default:
-					mapPool = "7+";
-					break;
-			}
-
-			G_CmdExecute("exec configs/server/gametypes/" + gametype.name + "_maps_" + mapPool + ".cfg silent");
 		}
 
 		if (int(levelTime) > int(matchEndTime) + 1000) match.launchState(match.getState() + 1); // Small delay before score screen fires
@@ -741,6 +710,40 @@ bool GT_MatchStateFinished(int incomingMatchState) {
 
 	if(match.getState() == MATCH_STATE_POSTMATCH) {
 		match.stopAutorecord();
+
+		// Execute proper map pool according to the amount of players
+		if (playerAmount == 0) {
+			Team @team;
+			
+			for (int i = 0; i < 2; i++) {
+				@team = @G_GetTeam(i + TEAM_ALPHA);
+				for(int j = 0; @team.ent(j) != null; j++) {
+					playerAmount++;
+				}
+			}
+
+			switch (playerAmount) {
+				case 0:
+				case 1:
+				case 2:
+				case 3:
+					mapPool = "0-3";
+					break;
+				case 4:
+					mapPool = "4";
+					break;
+				case 5:
+				case 6:
+					mapPool = "5-6";
+					break;
+				default:
+					mapPool = "7+";
+					break;
+			}
+
+			G_PrintMsg(null, "asdasd\n");
+			G_CmdExecute("exec configs/server/gametypes/" + gametype.name + "_maps_" + mapPool + ".cfg silent");
+		}
 	}
 
 	return true;
