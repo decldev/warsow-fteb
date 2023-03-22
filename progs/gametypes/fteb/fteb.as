@@ -19,6 +19,7 @@ String mapPool = "";
 
 int prcYesIcon;
 int[] defrosts(maxClients);
+int[] eb_hits(maxClients);
 uint[] lastShotTime(maxClients);
 int[] playerSTAT_PROGRESS_SELFdelayed(maxClients);
 uint[] playerLastTouch(maxClients);
@@ -314,9 +315,10 @@ String @GT_ScoreboardMessage(uint maxlen) {
 					+ ent.client.stats.score + " " + defrosts[ent.client.playerNum] + " " +
 					+ ent.client.ping + " " + readyIcon + " ";
 			} else {
-				// "Name Clan Score Frags Dfrst Ping R"
+				// "Name Clan Score Frags Hits Dfrst Ping R"
 				entry = "&p " + playerID + " " + ent.client.clanName + " "
-					+ ent.client.stats.score + " " + ent.client.stats.frags + " " + defrosts[ent.client.playerNum] + " "
+					+ (ent.client.stats.frags + eb_hits[ent.client.playerNum] + defrosts[ent.client.playerNum]) + " "
+					+ ent.client.stats.frags + " " + eb_hits[ent.client.playerNum] + " " + defrosts[ent.client.playerNum] + " "
 					+ ent.client.ping + " " + readyIcon + " ";
 			}
 
@@ -376,8 +378,9 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
 			}
 
         	if ( @attacker != null && @attacker.client != null ) {
-            	if (gametype.isInstagib == false) {
+            	if (gametype.isInstagib == false && attacker.weapon == WEAP_ELECTROBOLT && args.getToken(1).toInt() <= 100) {
 					GT_Stats_GetPlayer( attacker.client ).stats.add("eb_hits", 1);
+					eb_hits[attacker.client.playerNum]++;
 				}
 			}
 
@@ -879,8 +882,8 @@ void GT_InitGametype() {
 		G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 52 %i 52 %l 48 %p 18");
 		G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Dfrst Ping R");
 	} else {
-		G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 52 %i 52 %i 52 %l 48 %r l1" );
-		G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Frags Dfrst Ping R" );
+		G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 52 %i 52 %i 52 %i 52 %l 48 %r l1" );
+		G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Frags Hits Dfrst Ping R" );
 	}
 
 	// precache images that can be used by the scoreboard
