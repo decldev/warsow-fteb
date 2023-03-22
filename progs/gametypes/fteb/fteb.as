@@ -58,6 +58,20 @@ bool playerIsAlone(Client @client) {
 	return false;
 }
 
+void createMapPoolFile(String players, String maps) {
+	if(!G_FileExists("configs/server/gametypes/" + gametype.name + "_maps_" + players + ".cfg")) {
+		// the config file doesn't exist or it's empty, create it
+		String response;
+		response = "// '" + gametype.title + "' gametype map pool for " + players + " players\n"
+			+ "// This config will be executed during each score screen\n"
+			+ "\nset g_maplist \"" + maps + "\"\n"
+			+ "\necho \"" + gametype.name + "_maps_" + players + ".cfg executed\"\n";
+		G_WriteFile("configs/server/gametypes/" + gametype.name + "_maps_" + players + ".cfg", response);
+		G_Print("Created default " + players + " player map pool file for '" + gametype.name + "'\n");
+		G_CmdExecute("exec configs/server/gametypes/" + gametype.name + "_maps_" + players + ".cfg silent");
+	}
+}
+
 void FTAG_giveInventory(Client @client) {
     client.inventoryClear();
 
@@ -877,6 +891,13 @@ void GT_InitGametype() {
 	G_RegisterCommand("gametype");
 	G_RegisterCommand("fteb_stats");
 
+	// Create configs for different map pools by player amount
+	// These are checked for in GT_MatchStateFinished()
+	createMapPoolFile("0-3", "wda1, wda2, wda3, wda4, wda5, wdm1, wdm5, wdm9, wdm11, wdm12, wdm14, wdm15, wdm17, wdm18, wdm20");
+	createMapPoolFile("4", "wdm1, wdm5, wdm9, wdm11, wdm12, wdm14, wdm15, wdm17, wdm18, wdm20");
+	createMapPoolFile("5-6", "wdm1, wdm8, wdm9, wdm12, wdm14, wdm17, wdm18, wdm20");
+	createMapPoolFile("7+", "wca1, wbomb1, wbomb2, wbomb3, wbomb4, wbomb5, wbomb6");
+
 	if(!G_FileExists("configs/server/gametypes/" + gametype.name + ".cfg")) {
 		String config;
 		// the config file doesn't exist or it's empty, create it
@@ -909,51 +930,6 @@ void GT_InitGametype() {
 		G_WriteFile("configs/server/gametypes/" + gametype.name + ".cfg", config);
 		G_Print("Created default config file for '" + gametype.name + "'\n");
 		G_CmdExecute("exec configs/server/gametypes/" + gametype.name + ".cfg silent");
-	}
-
-	String ftag_maps;
-	if(!G_FileExists("configs/server/gametypes/" + gametype.name + "_maps_0-3.cfg")) {
-		// the config file doesn't exist or it's empty, create it
-		ftag_maps = "// '" + gametype.title + "' gametype map pool for 0-3 players\n"
-			+ "// This config will be executed during each score screen\n"
-			+ "\nset g_maplist \"wda1, wda2, wda3, wda4, wda5, wdm1, wdm5, wdm9, wdm11, wdm12, wdm14, wdm15, wdm17, wdm18, wdm20\"\n"
-			+ "\necho \"" + gametype.name + "_maps_0-3.cfg executed\"\n";
-		G_WriteFile("configs/server/gametypes/" + gametype.name + "_maps_0-3.cfg", ftag_maps);
-		G_Print("Created default 0-3 player map pool file for '" + gametype.name + "'\n");
-		G_CmdExecute("exec configs/server/gametypes/" + gametype.name + "_maps_0-3.cfg silent");
-	}
-
-	if(!G_FileExists("configs/server/gametypes/" + gametype.name + "_maps_4.cfg")) {
-		// the config file doesn't exist or it's empty, create it
-		ftag_maps = "// '" + gametype.title + "' gametype map pool for 4 players\n"
-			+ "// This config will be executed during each score screen\n"
-			+ "\nset g_maplist \"wdm1, wdm5, wdm9, wdm11, wdm12, wdm14, wdm15, wdm17, wdm18, wdm20\"\n"
-			+ "\necho \"" + gametype.name + "_maps_4.cfg executed\"\n";
-		G_WriteFile("configs/server/gametypes/" + gametype.name + "_maps_4.cfg", ftag_maps);
-		G_Print("Created default 4 player map pool file for '" + gametype.name + "'\n");
-		G_CmdExecute("exec configs/server/gametypes/" + gametype.name + "_maps_4.cfg silent");
-	}
-
-	if(!G_FileExists("configs/server/gametypes/" + gametype.name + "_maps_5-6.cfg")) {
-		// the config file doesn't exist or it's empty, create it
-		ftag_maps = "// '" + gametype.title + "' gametype map pool for 5-6 players\n"
-			+ "// This config will be executed during each score screen\n"
-			+ "\nset g_maplist \"wdm1, wdm8, wdm9, wdm12, wdm14, wdm17, wdm18, wdm20\"\n"
-			+ "\necho \"" + gametype.name + "_maps_5-6.cfg executed\"\n";
-		G_WriteFile("configs/server/gametypes/" + gametype.name + "_maps_5-6.cfg", ftag_maps);
-		G_Print("Created default 5-6 player map pool file for '" + gametype.name + "'\n");
-		G_CmdExecute("exec configs/server/gametypes/" + gametype.name + "_maps_5-6.cfg silent");
-	}
-
-	if(!G_FileExists("configs/server/gametypes/" + gametype.name + "_maps_7+.cfg")) {
-		// the config file doesn't exist or it's empty, create it
-		ftag_maps = "// '" + gametype.title + "' gametype map pool for 7+ players\n"
-			+ "// This config will be executed during each score screen\n"
-			+ "\nset g_maplist \"wca1, wbomb1, wbomb2, wbomb3, wbomb4, wbomb5, wbomb6\"\n"
-			+ "\necho \"" + gametype.name + "_maps_7+.cfg executed\"\n";
-		G_WriteFile("configs/server/gametypes/" + gametype.name + "_maps_7+.cfg", ftag_maps);
-		G_Print("Created default 7+ player map pool file for '" + gametype.name + "'\n");
-		G_CmdExecute("exec configs/server/gametypes/" + gametype.name + "_maps_7+.cfg silent");
 	}
 
 	G_Print("Gametype '" + gametype.title + "' initialized\n");
