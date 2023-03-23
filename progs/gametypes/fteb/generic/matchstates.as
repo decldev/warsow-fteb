@@ -178,9 +178,11 @@ void GENERIC_SetUpEndMatch()
         G_PrintMsg( null, S_COLOR_YELLOW + "Final score: " + S_COLOR_WHITE + team1.name + S_COLOR_WHITE + " vs " +
                     team2.name + S_COLOR_WHITE + " - " + match.getScore() + "\n" );
 
-        // save match stats
+        // statistic stuff
         for ( int i = 0; i < maxClients; i++ ) {
-            @client = @G_GetClient( i );
+            @client = @G_GetClient(i);
+
+            // record match stats
             if ( client.state() >= CS_SPAWNED ) {
                 if ( int(client.team) == 2 || int(client.team) == 3 ) {
                     if ( int(client.team) == match_winner ) {
@@ -189,6 +191,11 @@ void GENERIC_SetUpEndMatch()
                         GT_Stats_GetPlayer( client ).stats.add("match_losses", 1);
                     }
                 }
+            }
+
+            // write match stats
+            if (int(client.team) == 1 || int(client.team) == 2 || int(client.team) == 3) {
+                if (@client != null && client.playerNum >= 0) GT_Stats_GetPlayer( client ).write();
             }
         }
     }

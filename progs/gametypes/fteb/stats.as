@@ -22,12 +22,16 @@ class Stats_Player
 
     ~Stats_Player() {}
 
+    void write() {
+        this.stats.save();
+    }
+
     void load()
     {
         String cleanName = this.client.name.removeColorTokens().tolower();
         for ( uint i = 0; i < invalid_chars.length(); i++ )
         {
-            cleanName = cleanName.replace(invalid_chars.substr(i,1), "");
+            cleanName = cleanName.replace(invalid_chars.substr(i, 1), "");
         }
         if ( gt_stats_debug.boolean )
             G_Print("clear "+cleanName+"\n");
@@ -36,7 +40,7 @@ class Stats_Player
         @this.stats = @StatsFile("players/"+cleanName+"_");
         this.stats["cleanName"] = cleanName;
         this.stats["name"] = client.name;
-        this.stats.save();
+        // this.stats.save();
     }
 }
 
@@ -115,12 +119,12 @@ class StatsFile
         {
             this.vars.push_back( var );
             this.values.push_back( value );
-            this.save();
+            // this.save();
             return;
         }
 
         this.values[index] = value;
-        this.save();
+        // this.save();
     }
 
     void add(String& var, int value)

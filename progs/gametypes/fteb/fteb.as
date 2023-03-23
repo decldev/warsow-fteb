@@ -405,17 +405,13 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
 	} else if ( score_event == "enterGame" ) {
         if ( @client != null )
         {
-            GT_Stats_GetPlayer( client ).load();
+            GT_Stats_GetPlayer(client).load();
         }
     } else if ( score_event == "userinfochanged" ) {
         if ( @client != null )
         {
-            Stats_Player@ player = @GT_Stats_GetPlayer( client );
-            if ( @player.stats == null )
-                player.load();
-
-            if ( client.name != player.stats["name"] )
-                player.load();
+			Stats_Player@ player = @GT_Stats_GetPlayer( client );
+			if ( @player.stats == null || client.name != player.stats["name"] ) player.load();
         }
     }
 }
