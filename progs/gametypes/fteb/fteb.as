@@ -15,11 +15,13 @@ int ftaga_countDown;
 int ftaga_state;
 int matchEndTime;
 int playerAmount;
-String mapPool = "";
+String mapPool;
 
 int prcYesIcon;
 int[] defrosts(maxClients);
 int[] eb_hits(maxClients);
+int[] assists(maxClients);
+int[][] assistTrack(maxClients);
 uint[] lastShotTime(maxClients);
 int[] playerSTAT_PROGRESS_SELFdelayed(maxClients);
 uint[] playerLastTouch(maxClients);
@@ -58,6 +60,41 @@ bool playerIsAlone(Client @client) {
 
 	return false;
 }
+
+/*int sumHalfArr(array<array<float>> arr) {
+	arr.resize(arr.length() / 2);
+	arr.reduce([](int x, int y) { return x + y; }, 0);
+	return int(arr[0]);
+}
+
+void fteb_shuffle() {
+	Team @alpha = @G_GetTeam( TEAM_ALPHA );
+    Team @beta = @G_GetTeam( TEAM_BETA );
+	array<array<float>> old;
+	array<array<float>> new;
+
+	// Shuffle until teams are not same as before
+	while (sumHalfArr(old) == sumHalfArr(new) ) {
+		for (int i = 0; i < 2; i++) {
+			Team currTeam = G_GetTeam(i + TEAM_ALPHA);
+			for(int j = -1; @currTeam.ent(j + 1) != null; j++) {
+				old[i][j] = rand();
+			}
+		}
+
+		new = old.sortAsc();
+	}
+	
+	// Sort players to shuffled teams
+	for (int k = 0; k < maxClients; k++) {
+		if (G_GetClient(k) != null) {
+			Entity @ent = G_GetEntity(G_GetClient(k));
+			ent.team = k < new.length() / 2 ? TEAM_ALPHA : TEAM_BETA;
+		}
+	}
+
+	G_PrintMsg(null, "Teams shuffled!");
+}*/
 
 void createMapPoolFile(String players, String maps) {
 	if(!G_FileExists("configs/server/gametypes/" + gametype.name + "_maps_" + players + ".cfg")) {
@@ -101,7 +138,17 @@ void FTAG_playerKilled(Entity @target, Entity @attacker, Entity @inflictor, Stri
 
 	if(@attacker != null && @attacker.client != null) {
 		if(match.getState() == MATCH_STATE_PLAYTIME) {
+			// Record kills
 			GT_Stats_GetPlayer( attacker.client ).stats.add("kills", 1);
+
+			// Record assists
+			if (assistTrack[target.client.playerNum].length() > 1) {
+				Client @assister = G_GetClient(assistTrack[target.client.playerNum][1]);
+				assists[assister.playerNum]++;
+				GT_Stats_GetPlayer(assister).stats.add("assists", 1);
+				assistTrack[target.client.playerNum].resize(0);
+			}
+
 			GT_updateScore(attacker.client);
 		}
 	}
@@ -271,7 +318,16 @@ bool GT_Command(Client @client, const String &cmdString, const String &argsStrin
 	} else if ( cmdString == "fteb_stats" ) {
         Stats_Player@ player = @GT_Stats_GetPlayer( client );
         G_PrintMsg( client.getEnt(), player.stats.toString() );
-    }
+		return true;
+    } /*else if ( cmdString == "fteb_shuffle" ) {
+		if (match.getState() != MATCH_STATE_WARMUP) {
+			G_PrintMsg(client.getEnt(), "Teams can only be shuffled during warmup");
+			return false;
+		}
+
+		fteb_shuffle();
+		return true;
+	}*/
 	return false;
 }
 
@@ -289,6 +345,7 @@ Entity @GT_SelectSpawnPoint(Entity @self) {
 String @GT_ScoreboardMessage(uint maxlen) {
 	String scoreboardMessage = "";
 	String entry;
+	int totalScore;
 	Team @team;
 	Entity @ent;
 	int i, t, readyIcon;
@@ -316,9 +373,10 @@ String @GT_ScoreboardMessage(uint maxlen) {
 					+ ent.client.ping + " " + readyIcon + " ";
 			} else {
 				// "Name Clan Score Frags Hits Dfrst Ping R"
+				totalScore = ((ent.client.stats.frags * 2) + (eb_hits[ent.client.playerNum] * 2) + (defrosts[ent.client.playerNum] * 2) + assists[ent.client.playerNum]);
 				entry = "&p " + playerID + " " + ent.client.clanName + " "
-					+ (ent.client.stats.frags + eb_hits[ent.client.playerNum] + defrosts[ent.client.playerNum]) + " "
-					+ ent.client.stats.frags + " " + eb_hits[ent.client.playerNum] + " " + defrosts[ent.client.playerNum] + " "
+					+ totalScore + " "
+					+ ent.client.stats.frags + " " + assists[ent.client.playerNum] + " " + eb_hits[ent.client.playerNum] + " " + defrosts[ent.client.playerNum] + " "
 					+ ent.client.ping + " " + readyIcon + " ";
 			}
 
@@ -354,7 +412,7 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
     } else if(score_event == "dmg") {
 		if(match.getState() == MATCH_STATE_PLAYTIME) {
 			Entity @attacker = null;
-			Entity @ent = G_GetEntity(args.getToken(0).toInt());
+			Entity @target = G_GetEntity(args.getToken(0).toInt());
 
     		if ( @client != null )
        			@attacker = @client.getEnt();
@@ -365,14 +423,14 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
 
 			// defrost telefragged frozen players
 			if (args.getToken(1).toInt() == 100000) {
-				cFrozenPlayer @frozen = @FTAG_GetFrozenForEnt(ent);
+				cFrozenPlayer @frozen = @FTAG_GetFrozenForEnt(target);
 				if(@frozen != null) {
 					frozen.defrost(true);
 				}
 			}
 			
-			if(@ent != null && @ent.client != null) {
-				lastShotTime[ent.client.playerNum] = levelTime;
+			if(@target != null && @target.client != null) {
+				lastShotTime[target.client.playerNum] = levelTime;
 			} else {
 				return; // ignore shots to frozen players
 			}
@@ -381,6 +439,18 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
             	if (gametype.isInstagib == false && attacker.weapon == WEAP_ELECTROBOLT && args.getToken(1).toInt() <= 100) {
 					GT_Stats_GetPlayer( attacker.client ).stats.add("eb_hits", 1);
 					eb_hits[attacker.client.playerNum]++;
+
+					// Keep track of last two who shot the target
+					int[] @targetNum = assistTrack[target.client.playerNum];
+					if (targetNum.length() > 0) {
+						if (targetNum[0] != attacker.client.playerNum) {
+							targetNum.insertAt(0, attacker.client.playerNum);
+						}
+					} else {
+						targetNum.insertAt(0, attacker.client.playerNum);
+					}
+					
+					if (targetNum.length() > 1) targetNum.resize(2);
 				}
 			}
 
@@ -878,8 +948,8 @@ void GT_InitGametype() {
 		G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 52 %i 52 %l 48 %p 18");
 		G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Dfrst Ping R");
 	} else {
-		G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 52 %i 52 %i 52 %i 52 %l 48 %r l1" );
-		G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Frags Hits Dfrst Ping R" );
+		G_ConfigString(CS_SCB_PLAYERTAB_LAYOUT, "%n 100 %s 52 %i 36 %i 36 %i 36 %i 36 %i 36 %l 36 %r l1" );
+		G_ConfigString(CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Frags Assts Hits Dfrst Ping R" );
 	}
 
 	// precache images that can be used by the scoreboard
@@ -889,6 +959,8 @@ void GT_InitGametype() {
 	G_RegisterCommand("drop");
 	G_RegisterCommand("gametype");
 	G_RegisterCommand("fteb_stats");
+	G_RegisterCommand("fteb_shuffle");
+	G_RegisterCommand("fteb_rebalance");
 
 	// Create configs for different map pools by player amount
 	// These are checked for in GT_MatchStateFinished()
