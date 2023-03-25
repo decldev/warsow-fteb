@@ -345,7 +345,6 @@ Entity @GT_SelectSpawnPoint(Entity @self) {
 String @GT_ScoreboardMessage(uint maxlen) {
 	String scoreboardMessage = "";
 	String entry;
-	int totalScore;
 	Team @team;
 	Entity @ent;
 	int i, t, readyIcon;
@@ -372,10 +371,8 @@ String @GT_ScoreboardMessage(uint maxlen) {
 					+ ent.client.stats.score + " " + defrosts[ent.client.playerNum] + " " +
 					+ ent.client.ping + " " + readyIcon + " ";
 			} else {
-				// "Name Clan Score Frags Hits Dfrst Ping R"
-				totalScore = ((ent.client.stats.frags * 2) + (eb_hits[ent.client.playerNum] * 2) + (defrosts[ent.client.playerNum] * 2) + assists[ent.client.playerNum]);
-				entry = "&p " + playerID + " " + ent.client.clanName + " "
-					+ totalScore + " "
+				// "Name Clan Score Frags Assists Hits Dfrst Ping R"
+				entry = "&p " + playerID + " " + ent.client.clanName + " " + ent.client.stats.score + " "
 					+ ent.client.stats.frags + " " + assists[ent.client.playerNum] + " " + eb_hits[ent.client.playerNum] + " " + defrosts[ent.client.playerNum] + " "
 					+ ent.client.ping + " " + readyIcon + " ";
 			}
@@ -394,7 +391,7 @@ void GT_updateScore(Client @client) {
 		if(gametype.isInstagib) {
 			client.stats.setScore(client.stats.frags + defrosts[client.playerNum]);
 		} else {
-			client.stats.setScore(int(client.stats.totalDamageGiven * 0.01) + defrosts[client.playerNum]);
+			client.stats.setScore((client.stats.frags * 2) + (eb_hits[client.playerNum] * 2) + (defrosts[client.playerNum] * 2) + assists[client.playerNum]);
 		}
 	}
 }
