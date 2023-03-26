@@ -22,6 +22,7 @@ int[] defrosts(maxClients);
 int[] eb_hits(maxClients);
 int[] assists(maxClients);
 int[][] assistTrack(maxClients);
+int[] multishotTrack(maxClients);
 uint[] lastShotTime(maxClients);
 int[] playerSTAT_PROGRESS_SELFdelayed(maxClients);
 uint[] playerLastTouch(maxClients);
@@ -411,12 +412,14 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
 			Entity @attacker = null;
 			Entity @target = G_GetEntity(args.getToken(0).toInt());
 
-    		if ( @client != null )
+    		if ( @client != null ) {
        			@attacker = @client.getEnt();
-
-			if(@client == null) {
+			} else {
 				return; // ignore falldamage
 			}
+
+			if (@attacker == @target)
+				return; // ignore self-damage
 
 			// defrost telefragged frozen players
 			if (args.getToken(1).toInt() == 100000) {
@@ -448,6 +451,9 @@ void GT_ScoreEvent(Client @client, const String &score_event, const String &args
 					}
 					
 					if (targetNum.length() > 1) targetNum.resize(2);
+
+					// Track hits for multishot detection
+					multishotTrack[attacker.client.playerNum]++;
 				}
 			}
 
@@ -652,6 +658,8 @@ void GT_ThinkRules() {
 				}
 				
 				client.inventorySetCount(AMMO_BOLTS, 99);
+				award_playerHit(client.getEnt(), multishotTrack[client.playerNum]);
+				multishotTrack[client.playerNum] = 0;
 			}
 		}
 		
