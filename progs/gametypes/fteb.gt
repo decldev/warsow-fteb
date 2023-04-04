@@ -11,8 +11,9 @@ generic/awards.as;
 
 fteb/fteb.as;
 fteb/fteb_cp.as;
-fteb/stats.as;
+fteb/fteb_stats.as;
 fteb/fteb_awards.as;
+fteb/fteb_callvotes.as;
 
 legacy/quake1.as;
 

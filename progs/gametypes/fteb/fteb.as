@@ -62,41 +62,6 @@ bool playerIsAlone(Client @client) {
 	return false;
 }
 
-/*int sumHalfArr(array<array<float>> arr) {
-	arr.resize(arr.length() / 2);
-	arr.reduce([](int x, int y) { return x + y; }, 0);
-	return int(arr[0]);
-}
-
-void fteb_shuffle() {
-	Team @alpha = @G_GetTeam( TEAM_ALPHA );
-    Team @beta = @G_GetTeam( TEAM_BETA );
-	array<array<float>> old;
-	array<array<float>> new;
-
-	// Shuffle until teams are not same as before
-	while (sumHalfArr(old) == sumHalfArr(new) ) {
-		for (int i = 0; i < 2; i++) {
-			Team currTeam = G_GetTeam(i + TEAM_ALPHA);
-			for(int j = -1; @currTeam.ent(j + 1) != null; j++) {
-				old[i][j] = rand();
-			}
-		}
-
-		new = old.sortAsc();
-	}
-	
-	// Sort players to shuffled teams
-	for (int k = 0; k < maxClients; k++) {
-		if (G_GetClient(k) != null) {
-			Entity @ent = G_GetEntity(G_GetClient(k));
-			ent.team = k < new.length() / 2 ? TEAM_ALPHA : TEAM_BETA;
-		}
-	}
-
-	G_PrintMsg(null, "Teams shuffled!");
-}*/
-
 void createMapPoolFile(String players, String maps) {
 	if(!G_FileExists("configs/server/gametypes/" + gametype.name + "_maps_" + players + ".cfg")) {
 		// the config file doesn't exist or it's empty, create it
@@ -310,25 +275,22 @@ bool GT_Command(Client @client, const String &cmdString, const String &argsStrin
 	} else if(cmdString == "callvotevalidate") {
 		String votename = argsString.getToken(0);
 
-		client.printMessage("Unknown callvote " + votename + "\n");
+		if (fteb_callvote(client, votename, true)) {
+			return true;
+		} else {
+			client.printMessage("Unknown callvote " + votename + "\n");
+		}
+			
 		return false;
-
 	} else if(cmdString == "callvotepassed") {
 		String votename = argsString.getToken(0);
-		return true;
+		return fteb_callvote(client, votename, false);
 	} else if ( cmdString == "fteb_stats" ) {
         Stats_Player@ player = @GT_Stats_GetPlayer( client );
         G_PrintMsg( client.getEnt(), player.stats.toString() );
 		return true;
-    } /*else if ( cmdString == "fteb_shuffle" ) {
-		if (match.getState() != MATCH_STATE_WARMUP) {
-			G_PrintMsg(client.getEnt(), "Teams can only be shuffled during warmup");
-			return false;
-		}
+    }
 
-		fteb_shuffle();
-		return true;
-	}*/
 	return false;
 }
 
@@ -961,11 +923,12 @@ void GT_InitGametype() {
 	prcYesIcon = G_ImageIndex("gfx/hud/icons/vsay/yes");
 
 	// add commands
-	G_RegisterCommand("drop");
 	G_RegisterCommand("gametype");
 	G_RegisterCommand("fteb_stats");
-	G_RegisterCommand("fteb_shuffle");
-	G_RegisterCommand("fteb_rebalance");
+
+	// add votes
+	G_RegisterCallvote("fteb_shuffle", "", "bool", "Actually shuffle teams.");
+	G_RegisterCallvote("fteb_rebalance", "", "bool", "Attempt to balance teams by calculating a simple MMR from saved fteb statistics.");
 
 	// Create configs for different map pools by player amount
 	// These are checked for in GT_MatchStateFinished()
