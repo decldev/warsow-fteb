@@ -166,7 +166,7 @@ void fteb_rebalance() {
 
 	// Brute force the shit out of possible team combinations
 	// Heavy in large player amounts like 20+
-	for (int i = 0; i < (1 << numPlayers.length()); i++) {
+	for (int64 i = 0; i < (1 << numPlayers.length()); i++) {
 		alpha.resize(0);
 		beta.resize(0);
 		alphaMMR = 0;
