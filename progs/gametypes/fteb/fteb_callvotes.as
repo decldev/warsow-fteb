@@ -1,24 +1,23 @@
 bool ftebCallvoteDebug = false;
 
-bool fteb_callvote(Client @client, String callvote, bool validate) {
-    if (callvote == "fteb_shuffle") {
-		if (validate) return true;
-		if (match.getState() != MATCH_STATE_WARMUP) {
-			G_PrintMsg(client.getEnt(), "Teams can only be shuffled during warmup");
-			return false;
-		}
+bool fteb_callvote(Client @client, int callvote) {
+	switch (callvote) {
+		case 1:
+			if (match.getState() != MATCH_STATE_WARMUP) {
+				G_PrintMsg(client.getEnt(), "Teams can only be shuffled during warmup");
+				return false;
+			}
 
-		fteb_shuffle();
-		return true;
-	} else if (callvote == "fteb_rebalance") {
-		if (validate) return true;
-		if (match.getState() != MATCH_STATE_WARMUP) {
-			G_PrintMsg(client.getEnt(), "Teams can only be rebalanced during warmup");
-			return false;
-		}
+			fteb_shuffle();
+			return true;
+		case 2:
+			if (match.getState() != MATCH_STATE_WARMUP) {
+				G_PrintMsg(client.getEnt(), "Teams can only be rebalanced during warmup");
+				return false;
+			}
 
-		fteb_rebalance();
-		return true;
+			fteb_rebalance();
+			return true;
 	}
 
     return false;
@@ -111,6 +110,7 @@ void fteb_rebalance() {
 	Client @client;
 
 	int iterationCount = 0;
+	int permutationCount = 0;
 
 	// Parse player statistic strings
 	for (int i = 0; i < maxClients; i++) {
@@ -159,7 +159,7 @@ void fteb_rebalance() {
 				playerStats[client.playerNum] = 100;
 			}
 
-			if (ftebCallvoteDebug) G_PrintMsg(null, "# " + client.name + " MMR: " + playerStats[client.playerNum] + " (KDA: " + averageKDAD + " - WL: " + averageWL + ")\n");
+			if (ftebCallvoteDebug) G_PrintMsg(null, "# " + client.name + " MMR: " + playerStats[client.playerNum] + " (KDAD: " + averageKDAD + " - WL: " + averageWL + ")\n");
 			numPlayers.insertLast(client.playerNum);
 		}
 	}
@@ -181,6 +181,8 @@ void fteb_rebalance() {
 
 			iterationCount++;
 		}
+
+		permutationCount++;
 
 		// Skip uneven sized teams
 		if (abs(alpha.length() - beta.length()) > 1) continue;
@@ -214,6 +216,6 @@ void fteb_rebalance() {
 		client.respawn(false);
 	}
 
-	if (ftebCallvoteDebug) G_PrintMsg(null, "Ran " + iterationCount + " simulations\n");
+	if (ftebCallvoteDebug) G_PrintMsg(null, "Ran " + iterationCount + " iterations and " + permutationCount + " permutations\n");
 	G_PrintMsg(null, S_COLOR_CYAN + "Teams rebalanced: " + S_COLOR_YELLOW + bestAlphaMMR + S_COLOR_CYAN + " VS " + S_COLOR_YELLOW + bestBetaMMR + "\n");
 }

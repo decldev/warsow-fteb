@@ -236,27 +236,7 @@ void GT_SpawnGametype() {
 }
 
 bool GT_Command(Client @client, const String &cmdString, const String &argsString, int argc) {
-	if(cmdString == "drop") {
-		String token;
-		for(int i = 0; i < argc; i++) {
-			token = argsString.getToken(i);
-			if(token.len() == 0) {
-				break;
-			}
-
-			if(token == "fullweapon") {
-				GENERIC_DropCurrentWeapon(client, true);
-				GENERIC_DropCurrentAmmoStrong(client);
-			} else if(token == "weapon") {
-				GENERIC_DropCurrentWeapon(client, true);
-			} else if(token == "strong") {
-				GENERIC_DropCurrentAmmoStrong(client);
-			} else {
-				GENERIC_CommandDropItem(client, token);
-			}
-		}
-		return true;
-	} else if(cmdString == "gametype") {
+	if(cmdString == "gametype") {
 		String response = "";
 		Cvar fs_game("fs_game", "", 0);
 		String manifest = gametype.manifest;
@@ -275,16 +255,19 @@ bool GT_Command(Client @client, const String &cmdString, const String &argsStrin
 	} else if(cmdString == "callvotevalidate") {
 		String votename = argsString.getToken(0);
 
-		if (fteb_callvote(client, votename, true)) {
-			return true;
-		} else {
-			client.printMessage("Unknown callvote " + votename + "\n");
-		}
-			
+		if (votename == "fteb") return true;
+
+		client.printMessage("Unknown callvote " + votename + "\n");
 		return false;
 	} else if(cmdString == "callvotepassed") {
 		String votename = argsString.getToken(0);
-		return fteb_callvote(client, votename, false);
+
+		if (votename == "fteb") {
+			int callvote = argsString.getToken(1);
+			return fteb_callvote(client, callvote);
+		}
+
+		return false;
 	} else if ( cmdString == "fteb_stats" ) {
         Stats_Player@ player = @GT_Stats_GetPlayer( client );
         G_PrintMsg( client.getEnt(), player.stats.toString() );
@@ -927,8 +910,7 @@ void GT_InitGametype() {
 	G_RegisterCommand("fteb_stats");
 
 	// add votes
-	G_RegisterCallvote("fteb_shuffle", "", "bool", "Actually shuffle teams.");
-	G_RegisterCallvote("fteb_rebalance", "", "bool", "Attempt to balance teams by calculating a simple MMR from saved fteb statistics.");
+	G_RegisterCallvote("fteb", "<1 or 2>", "integer", "1, SHUFFLE: Actually shuffle teams.\n\n2, REBALANCE: Balance teams by calculating a simple MMR from saved statistics.");
 
 	// Create configs for different map pools by player amount
 	// These are checked for in GT_MatchStateFinished()
