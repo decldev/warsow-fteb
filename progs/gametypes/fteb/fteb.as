@@ -15,6 +15,7 @@ int ftaga_countDown;
 int ftaga_state;
 int matchEndTime;
 int playerAmount;
+bool scorelimit;
 String mapPool;
 
 int prcYesIcon;
@@ -473,6 +474,7 @@ void GT_ThinkRules() {
 	if(match.scoreLimitHit()) {
 		if (matchEndTime == 0) {
 			matchEndTime = levelTime;
+			scorelimit = true; // Used to prevent statistic writing when map does not end naturally
 		}
 
 		if (int(levelTime) > int(matchEndTime) + 1000) match.launchState(match.getState() + 1); // Small delay before score screen fires

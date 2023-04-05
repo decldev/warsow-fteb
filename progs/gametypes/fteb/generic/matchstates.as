@@ -179,25 +179,28 @@ void GENERIC_SetUpEndMatch()
                     team2.name + S_COLOR_WHITE + " - " + match.getScore() + "\n" );
 
         // statistic stuff
-        for ( int i = 0; i < maxClients; i++ ) {
-            @client = @G_GetClient(i);
+        if (scorelimit) {
+            for ( int i = 0; i < maxClients; i++ ) {
+                @client = @G_GetClient(i);
 
-            // record match stats
-            if ( client.state() >= CS_SPAWNED ) {
-                if ( int(client.team) == 2 || int(client.team) == 3 ) {
-                    if ( int(client.team) == match_winner ) {
-                        GT_Stats_GetPlayer( client ).stats.add("match_wins", 1);
-                    } else {
-                        GT_Stats_GetPlayer( client ).stats.add("match_losses", 1);
+                // record match stats
+                if ( client.state() >= CS_SPAWNED ) {
+                    if ( int(client.team) == 2 || int(client.team) == 3 ) {
+                        if ( int(client.team) == match_winner ) {
+                            GT_Stats_GetPlayer( client ).stats.add("match_wins", 1);
+                        } else {
+                            GT_Stats_GetPlayer( client ).stats.add("match_losses", 1);
+                        }
                     }
                 }
-            }
 
-            // write match stats
-            if (int(client.team) == 1 || int(client.team) == 2 || int(client.team) == 3) {
-                if (@client != null && client.playerNum >= 0) GT_Stats_GetPlayer( client ).write();
+                // write match stats
+                if (int(client.team) == 1 || int(client.team) == 2 || int(client.team) == 3) {
+                    if (@client != null && client.playerNum >= 0) GT_Stats_GetPlayer( client ).write();
+                }
             }
         }
+        
     }
 
     int soundIndex = G_SoundIndex( "sounds/announcer/postmatch/game_over0" + (1 + (rand() & 1)) );
