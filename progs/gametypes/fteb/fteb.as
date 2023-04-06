@@ -1,13 +1,31 @@
-// TODO: make people spec whoever is defrosting them
+Cvar ftebReverseHandicap( "fteb_reversehandicap", "1", CVAR_ARCHIVE );
+Cvar ftebStatsEnable( "fteb_stats_enable", "1", CVAR_ARCHIVE );
+Cvar ftebStatsMinplayers( "fteb_stats_minplayers", "4", CVAR_ARCHIVE );
+Cvar ftebStatsDebug( "fteb_stats_debug", "0", CVAR_ARCHIVE );
+Cvar ftebRebalanceDebug( "fteb_rebalance_debug", "0", CVAR_ARCHIVE );
+Cvar ftebDefrostTime( "fteb_defrost_time", "3000", CVAR_ARCHIVE );
+Cvar ftebDefrostShatterDelay( "fteb_defrost_shatter_delay", "6000", CVAR_ARCHIVE );
+Cvar ftebDefrostAttackDelay( "fteb_defrost_attack_delay", "2000", CVAR_ARCHIVE );
+Cvar ftebDefrostHazardScale( "fteb_defrost_hazard_scale", "2", CVAR_ARCHIVE );
+Cvar ftebDefrostAttackScale( "fteb_defrost_attack_scale", "5", CVAR_ARCHIVE );
+Cvar ftebDefrostDecayScale( "fteb_defrost_decay_scale", "5", CVAR_ARCHIVE );
+Cvar ftebDefrostRadius( "fteb_defrost_radius", "144", CVAR_ARCHIVE );
+Cvar ftebElectroboltKnockback( "fteb_electrobolt_knockback", "1", CVAR_ARCHIVE );
 
-const uint FTAG_DEFROST_TIME = 3000;
-const uint FTAG_SHATTER_DELAY = 6000;
-const uint FTAG_INVERSE_HAZARD_DEFROST_SCALE = 2;
-const uint FTAG_INVERSE_ATTACK_DEFROST_SCALE = 5;
-const uint FTAG_DEFROST_ATTACK_DELAY = 2000;
+Cvar g_knockback_scale("g_knockback_scale", "", 0);
+
+int minValue(int value) {
+	return value > 0 ? value : 1;
+}
+
+const uint FTAG_DEFROST_TIME = minValue(ftebDefrostTime.integer);
+const uint FTAG_SHATTER_DELAY = minValue(ftebDefrostShatterDelay.integer);
+const uint FTAG_INVERSE_HAZARD_DEFROST_SCALE = minValue(ftebDefrostHazardScale.integer);
+const uint FTAG_INVERSE_ATTACK_DEFROST_SCALE = minValue(ftebDefrostAttackScale.integer);
+const uint FTAG_DEFROST_ATTACK_DELAY = minValue(ftebDefrostAttackDelay.integer);
 //const uint FTAG_DEFROST_DECAY_DELAY = 500;
-const uint FTAG_DEFROST_DECAY_SCALE = 2;
-const float FTAG_DEFROST_RADIUS = 144.0f;
+const uint FTAG_DEFROST_DECAY_SCALE = minValue(ftebDefrostDecayScale.integer);
+const float FTAG_DEFROST_RADIUS = float(minValue(ftebDefrostRadius.integer));
 
 uint ftaga_roundStateStartTime;
 uint ftaga_roundStateEndTime;
@@ -30,9 +48,6 @@ uint[] playerLastTouch(maxClients);
 bool[] spawnNextRound(maxClients);
 //String[] defrostMessage(maxClients);
 bool doRemoveRagdolls = false;
-
-Cvar reverseHandicap( "fteb_reversehandicap", "1", CVAR_ARCHIVE );
-Cvar g_knockback_scale("g_knockback_scale", "", 0);
 
 // Vec3 doesn't have dot product ffs
 float dot(const Vec3 v1, const Vec3 v2) {
@@ -85,7 +100,7 @@ void FTAG_giveInventory(Client @client) {
 	client.inventorySetCount(AMMO_WEAK_BOLTS, 99);
 
     // give armor
-    if (reverseHandicap.boolean && playerIsAlone(client)) {
+    if (ftebReverseHandicap.boolean && playerIsAlone(client)) {
 		client.armor = 125;
 	} else client.armor = 50;
 
@@ -581,24 +596,27 @@ void GT_ThinkRules() {
 		// Should shooting be done by detecting ET_EVENT instead?
 		if ( client.inventoryCount(AMMO_BOLTS) < 99 && ( client.team == 2 || client.team == 3 )) {
 			if ( gametype.isInstagib == false ) {
-				Vec3 eye = ent.origin + Vec3(0, 0, ent.viewHeight);
+				// Create explosion for fake knockback
+				if (ftebElectroboltKnockback.boolean) {
+					Vec3 eye = ent.origin + Vec3(0, 0, ent.viewHeight);
 
-				Vec3 dir, right, up;
-				// unit vector
-				ent.angles.angleVectors(dir, right, up);
+					Vec3 dir, right, up;
+					// unit vector
+					ent.angles.angleVectors(dir, right, up);
 
-				Vec3 player_look;
-				player_look = eye + dir * 9001; // Max distance to apply the explosion
+					Vec3 player_look;
+					player_look = eye + dir * 9001; // Max distance to apply the explosion
 
-				Trace tr; // tr.ent: -1 = nothing; 0 = wall; 1 = player
-				tr.doTrace(eye, Vec3(), Vec3(), player_look, 1, MASK_SOLID);
+					Trace tr; // tr.ent: -1 = nothing; 0 = wall; 1 = player
+					tr.doTrace(eye, Vec3(), Vec3(), player_look, 1, MASK_SOLID);
 
-				Entity @boom = @G_SpawnEntity("boom");
-				boom.origin = tr.get_endPos();
-				boom.splashDamage(@boom, 72, 0, 67 * g_knockback_scale.value, 0, MOD_EXPLOSIVE);
-				
-				// destroy splash entity
-				boom.freeEntity();
+					Entity @boom = @G_SpawnEntity("boom");
+					boom.origin = tr.get_endPos();
+					boom.splashDamage(@boom, 72, 0, 67 * g_knockback_scale.value, 0, MOD_EXPLOSIVE);
+					
+					// destroy splash entity
+					boom.freeEntity();
+				}
 
 				if ( match.getState() == MATCH_STATE_PLAYTIME && !ent.isGhosting()) {
 					GT_Stats_GetPlayer( client ).stats.add("eb_shots", 1);
@@ -934,6 +952,18 @@ void GT_InitGametype() {
 			+ "set g_maprotation \"1\"   // 0 = same map, 1 = in order, 2 = random\n"
 			+ "\n// game settings\n"
 			+ "set fteb_reversehandicap \"1\" // Give more armor as solo in 1v2+\n"
+			+ "set fteb_stats_enable \"1\"\n"
+			+ "set fteb_stats_minplayers \"4\"\n"
+			+ "set fteb_stats_debug \"0\"\n"
+			+ "set fteb_rebalance_debug \"0\"\n"
+			+ "set fteb_defrost_time \"3000\"\n"
+			+ "set fteb_defrost_shatter_delay \"6000\"\n"
+			+ "set fteb_defrost_attack_delay \"2000\"\n"
+			+ "set fteb_defrost_hazard_scale \"2\"\n"
+			+ "set fteb_defrost_attack_scale \"5\"\n"
+			+ "set fteb_defrost_decay_scale \"5\"\n"
+			+ "set fteb_defrost_radius \"144\"\n"
+			+ "set fteb_electrobolt_knockback \"1\"\n\n"
 			+ "set dm_powerupDrop \"0\"\n"
 			+ "set g_scorelimit \"11\"\n"
 			+ "set g_timelimit \"0\"\n"

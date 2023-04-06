@@ -1,5 +1,3 @@
-bool ftebCallvoteDebug = false;
-
 bool fteb_callvote(Client @client, int callvote) {
 	switch (callvote) {
 		case 1:
@@ -159,7 +157,7 @@ void fteb_rebalance() {
 				playerStats[client.playerNum] = 100;
 			}
 
-			if (ftebCallvoteDebug) G_PrintMsg(null, "# " + client.name + " MMR: " + playerStats[client.playerNum] + " (KDAD: " + averageKDAD + " - WL: " + averageWL + ")\n");
+			if (ftebRebalanceDebug.boolean) G_PrintMsg(null, "# " + client.name + " MMR: " + playerStats[client.playerNum] + " (KDAD: " + averageKDAD + " - WL: " + averageWL + ")\n");
 			numPlayers.insertLast(client.playerNum);
 		}
 	}
@@ -199,7 +197,7 @@ void fteb_rebalance() {
 			bestAlphaMMR = alphaMMR;
 			bestBetaMMR = betaMMR;
 
-			if (ftebCallvoteDebug) G_PrintMsg(null, "# New best difference: " + bestDiff + "\n");
+			if (ftebRebalanceDebug.boolean) G_PrintMsg(null, "# New best difference: " + bestDiff + "\n");
 		}
 	}
 
@@ -216,6 +214,6 @@ void fteb_rebalance() {
 		client.respawn(false);
 	}
 
-	if (ftebCallvoteDebug) G_PrintMsg(null, "Ran " + iterationCount + " iterations and " + permutationCount + " permutations\n");
+	if (ftebRebalanceDebug.boolean) G_PrintMsg(null, "Ran " + iterationCount + " iterations and " + permutationCount + " permutations\n");
 	G_PrintMsg(null, S_COLOR_CYAN + "Teams rebalanced: " + S_COLOR_YELLOW + bestAlphaMMR + S_COLOR_CYAN + " VS " + S_COLOR_YELLOW + bestBetaMMR + "\n");
 }

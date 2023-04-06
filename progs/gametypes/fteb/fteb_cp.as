@@ -148,7 +148,7 @@ class cFrozenPlayer {
 			// defrost slowly if they're in a sticky situation
 			this.defrostTime += frameTime / FTAG_INVERSE_HAZARD_DEFROST_SCALE;
 
-			if(this.defrostTime > FTAG_DEFROST_TIME) {
+			if(this.defrostTime > int(FTAG_DEFROST_TIME)) {
 				Team @team = @G_GetTeam(this.client.team);
 				for(int i = 0; @team.ent(i) != null; i++) {
 					Entity @ent = @team.ent(i);
@@ -179,7 +179,7 @@ class cFrozenPlayer {
 			this.defrostTime += frameTime;
 		}
 
-		if(this.defrostTime > FTAG_DEFROST_TIME) {
+		if(this.defrostTime > int(FTAG_DEFROST_TIME)) {
 			Team @team = @G_GetTeam(this.client.team);
 			for(int i = 0; @team.ent(i) != null; i++) {
 				Entity @ent = @team.ent(i);

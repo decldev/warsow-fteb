@@ -1,4 +1,3 @@
-Cvar gt_stats_debug = Cvar("gt_stats_debug", "0", 0);
 bool stats_initialized = false;
 const String stats_basepath = "stats/fteb/";
 const String invalid_chars = "\\/:*?\"<>|";
@@ -6,7 +5,7 @@ StatsFile@ stats_xp;
 
 void G_SPrint( String& msg )
 {
-    if ( gt_stats_debug.boolean )
+    if ( ftebStatsDebug.boolean )
         G_Print(msg);
 }
 
@@ -33,7 +32,7 @@ class Stats_Player
         {
             cleanName = cleanName.replace(invalid_chars.substr(i, 1), "");
         }
-        if ( gt_stats_debug.boolean )
+        if ( ftebStatsDebug.boolean )
             G_Print("clear "+cleanName+"\n");
         // TODO: find better solution for this
         // random trailing character because files ending in "." don't work
