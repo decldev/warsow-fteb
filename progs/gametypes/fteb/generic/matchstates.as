@@ -160,7 +160,7 @@ void GENERIC_SetUpEndMatch()
 
         if ( client.state() >= CS_SPAWNED ) {
             client.respawn( true ); // ghost them all
-            playerCount++;
+            if ( int(client.team) == 2 || int(client.team) == 3 ) playerCount++;
             GENERIC_SetPostmatchQuickMenu( @client );
         }
     }
