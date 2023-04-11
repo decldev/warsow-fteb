@@ -160,6 +160,7 @@ void GENERIC_SetUpEndMatch()
 
         if ( client.state() >= CS_SPAWNED ) {
             client.respawn( true ); // ghost them all
+            playerCount++;
             GENERIC_SetPostmatchQuickMenu( @client );
         }
     }
@@ -188,19 +189,17 @@ void GENERIC_SetUpEndMatch()
                 if ( client.state() >= CS_SPAWNED ) {
                     if ( int(client.team) == 2 || int(client.team) == 3 ) {
                         if ( int(client.team) == match_winner ) {
-                            GT_Stats_GetPlayer( client ).stats.add("match_wins", 1);
+                            GT_Stats_GetPlayer(client).stats.add("match_wins", 1);
                         } else {
-                            GT_Stats_GetPlayer( client ).stats.add("match_losses", 1);
+                            GT_Stats_GetPlayer(client).stats.add("match_losses", 1);
                         }
-
-                        playerCount++;
                     }
                 }
 
                 // write match stats
                 if (playerCount >= ftebStatsMinplayers.integer && ftebStatsEnable.boolean) {
                     if (int(client.team) == 1 || int(client.team) == 2 || int(client.team) == 3) {
-                        if (@client != null && client.playerNum >= 0) GT_Stats_GetPlayer( client ).write();
+                        if (@client != null && client.playerNum >= 0) GT_Stats_GetPlayer(client).write();
                     }
                 }
             }

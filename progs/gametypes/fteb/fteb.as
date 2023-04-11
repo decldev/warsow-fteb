@@ -964,7 +964,6 @@ void GT_InitGametype() {
 			+ "set fteb_defrost_decay_scale \"5\"\n"
 			+ "set fteb_defrost_radius \"144\"\n"
 			+ "set fteb_electrobolt_knockback \"1\"\n\n"
-			+ "set dm_powerupDrop \"0\"\n"
 			+ "set g_scorelimit \"11\"\n"
 			+ "set g_timelimit \"0\"\n"
 			+ "set g_warmup_enabled \"1\"\n"

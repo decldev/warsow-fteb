@@ -103,7 +103,7 @@ float parseKey(array<array<String @>> tokens, String key) {
 }
 
 void fteb_rebalance() {
-	int alphaMMR = 0, betaMMR = 0, bestAlphaMMR = 0, bestBetaMMR = 0, currentDiff = 99999, bestDiff = 99999; //, numPlayers = 0;
+	int alphaMMR = 0, betaMMR = 0, bestAlphaMMR = 0, bestBetaMMR = 0, currentDiff = 99999, bestDiff = 99999;
 	int[] playerStats(maxClients, 0), alpha, newAlpha, beta, newBeta, numPlayers;
 	Client @client;
 
