@@ -121,11 +121,14 @@ void fteb_rebalance() {
 			array<array<String @>> tokens;
 
 			Stats_Player@ player = @GT_Stats_GetPlayer(client);
+
+			if (player == null) continue; // Hopefully fixes null pointer access crash
+
 			String clientStats = player.stats.toString();
 
-			// Default new players to static 50 MMR
+			// Default new players to static 300 MMR
 			if (clientStats == "") {
-				playerStats[client.playerNum] = 50;
+				playerStats[client.playerNum] = 300;
 				continue;
 			}
 
@@ -152,9 +155,9 @@ void fteb_rebalance() {
 			// Poorly calculate player MMR
 			playerStats[client.playerNum] = int((averageKDAD * averageWL) * 1000.0f);
 
-			// Default new and/or weak players to 100
-			if (playerStats[client.playerNum] < 100 || totalRounds < 50) {
-				playerStats[client.playerNum] = 100;
+			// Default new and/or weak players to 300
+			if (playerStats[client.playerNum] < 300 || totalRounds < 50) {
+				playerStats[client.playerNum] = 300;
 			}
 
 			if (ftebRebalanceDebug.boolean) G_PrintMsg(null, "# " + client.name + " MMR: " + playerStats[client.playerNum] + " (KDAD: " + averageKDAD + " - WL: " + averageWL + ")\n");
